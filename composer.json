@@ -1,5 +1,5 @@
 {
-    "name": "ddj/mon-package",
+    "name": "nayazkaya/ddj",
     "description": "Un package perso",
     "type": "library",
     "version": "1.0.0",  
@@ -14,8 +14,8 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "DDJ",
-            "email": "ddj@ddj.net"
+            "name": "Arnaud Didierjean",
+            "email": "arnaud@didierjean.net"
         }
     ]
 }
