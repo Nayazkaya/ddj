@@ -1,0 +1,21 @@
+{
+    "name": "ddj/mon-package",
+    "description": "Un package perso",
+    "type": "library",
+    "version": "1.0.0",  
+    "autoload": {
+        "psr-4": {
+            "DDJ\\": "src/DDJ/"
+        }
+    },
+    "require": {
+        "php": ">=8.2"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "DDJ",
+            "email": "ddj@ddj.net"
+        }
+    ]
+}
