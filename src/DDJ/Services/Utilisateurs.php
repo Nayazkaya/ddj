@@ -26,13 +26,16 @@ class Utilisateurs
      */
     public function creerUtilisateur(string $user, string $mdp): bool
     {
+        // Hash du mot de passe avant de l'insérer dans la base de données
         $hash = password_hash($mdp, PASSWORD_DEFAULT);
         $sql = "INSERT INTO utilisateurs (user, mdp) VALUES (:user, :mdp)";
 
         try {
+            // Préparation de la requête SQL et exécution
             $stmt = $this->pdo->prepare($sql);
             return $stmt->execute(['user' => $user, 'mdp' => $hash]);
         } catch (PDOException $e) {
+            // Enregistrement des erreurs dans le log
             error_log("Erreur lors de la création de l'utilisateur: " . $e->getMessage());
             return false;
         }
@@ -49,10 +52,12 @@ class Utilisateurs
         $sql = "SELECT * FROM utilisateurs WHERE user = :user";
 
         try {
+            // Préparation et exécution de la requête SQL
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute(['user' => $user]);
             return $stmt->fetch() ?: null;
         } catch (PDOException $e) {
+            // Enregistrement des erreurs dans le log
             error_log("Erreur lors de la récupération de l'utilisateur: " . $e->getMessage());
             return null;
         }
@@ -68,13 +73,16 @@ class Utilisateurs
      */
     public function mettreAJourUtilisateur(int $id, string $user, string $mdp): bool
     {
+        // Hash du nouveau mot de passe
         $hash = password_hash($mdp, PASSWORD_DEFAULT);
         $sql = "UPDATE utilisateurs SET user = :user, mdp = :mdp WHERE id = :id";
 
         try {
+            // Préparation et exécution de la requête SQL
             $stmt = $this->pdo->prepare($sql);
             return $stmt->execute(['id' => $id, 'user' => $user, 'mdp' => $hash]);
         } catch (PDOException $e) {
+            // Enregistrement des erreurs dans le log
             error_log("Erreur lors de la mise à jour de l'utilisateur: " . $e->getMessage());
             return false;
         }
@@ -91,9 +99,11 @@ class Utilisateurs
         $sql = "DELETE FROM utilisateurs WHERE id = :id";
 
         try {
+            // Préparation et exécution de la requête SQL
             $stmt = $this->pdo->prepare($sql);
             return $stmt->execute(['id' => $id]);
         } catch (PDOException $e) {
+            // Enregistrement des erreurs dans le log
             error_log("Erreur lors de la suppression de l'utilisateur: " . $e->getMessage());
             return false;
         }
@@ -108,6 +118,7 @@ class Utilisateurs
      */
     public function verifierMotDePasse(string $user, string $mdp): bool
     {
+        // Récupère les informations de l'utilisateur
         $utilisateur = $this->obtenirUtilisateur($user);
         if ($utilisateur && password_verify($mdp, $utilisateur['mdp'])) {
             return true;
@@ -120,44 +131,51 @@ class Utilisateurs
      *
      * @return array Un tableau contenant les informations des utilisateurs (ID et nom d'utilisateur).
      */
-    public function obtenirTousUtilisateurs()
+    public function obtenirTousUtilisateurs(): array
     {
-        $pdo = Database::getInstance()->getConnection();
-        $stmt = $pdo->query("SELECT id, user FROM utilisateurs");
-        return $stmt->fetchAll();
+        try {
+            // Exécution de la requête SQL pour récupérer tous les utilisateurs
+            $stmt = $this->pdo->query("SELECT id, user FROM utilisateurs");
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            // Enregistrement des erreurs dans le log
+            error_log("Erreur lors de la récupération des utilisateurs: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
-     * Ajoute un utilisateur dans la base de données.
+     * Crée la table utilisateurs et ajoute l'utilisateur administrateur avec un mot de passe crypté.
      *
-     * @param string $user Le nom d'utilisateur.
-     * @param string $mdp Le mot de passe de l'utilisateur.
+     * @return bool True si la création de la table et l'ajout de l'admin ont réussi, sinon false.
      */
-    public function ajouterUtilisateur($user, $mdp)
+    public function creerTableEtAjouterAdmin(): bool
     {
-        $pdo = Database::getInstance()->getConnection();
-        $stmt = $pdo->prepare("INSERT INTO utilisateurs (user, mdp) VALUES (:user, :mdp)");
-        $stmt->execute([
-            'user' => $user,
-            'mdp' => password_hash($mdp, PASSWORD_DEFAULT)
-        ]);
-    }
+        // Création de la table utilisateurs
+        $sql = "CREATE TABLE IF NOT EXISTS utilisateurs (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            user VARCHAR(255) NOT NULL,
+            mdp VARCHAR(255) NOT NULL
+        )";
 
-    /**
-     * Modifie les informations d'un utilisateur existant dans la base de données.
-     *
-     * @param int $id L'ID de l'utilisateur à modifier.
-     * @param string $user Le nouveau nom d'utilisateur.
-     * @param string $mdp Le nouveau mot de passe de l'utilisateur.
-     */
-    public function modifierUtilisateur($id, $user, $mdp)
-    {
-        $pdo = Database::getInstance()->getConnection();
-        $stmt = $pdo->prepare("UPDATE utilisateurs SET user = :user, mdp = :mdp WHERE id = :id");
-        $stmt->execute([
-            'id' => $id,
-            'user' => $user,
-            'mdp' => password_hash($mdp, PASSWORD_DEFAULT)
-        ]);
+        try {
+            // Exécution de la requête de création de la table
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+
+            // Ajouter l'utilisateur admin avec le mot de passe crypté
+            $sqlInsert = "INSERT INTO utilisateurs (user, mdp) VALUES (:user, :mdp)";
+            $stmtInsert = $this->pdo->prepare($sqlInsert);
+            $stmtInsert->execute([
+                'user' => 'admin',
+                'mdp' => '$2y$10$0oJi0aKWo67JzL2TmBRBq./kBjdKEiL9nPV9iffvwIpU.cMzfLxEi' // mot de passe crypté
+            ]);
+
+            return true;
+        } catch (PDOException $e) {
+            // Enregistrement des erreurs dans le log
+            error_log("Erreur lors de la création de la table ou de l'ajout de l'admin: " . $e->getMessage());
+            return false;
+        }
     }
 }
