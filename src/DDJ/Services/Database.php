@@ -32,7 +32,7 @@ class Database
     private function __construct()
     {
         // Utilisation d'un chemin absolu ou d'une constante pour éviter les problèmes de chemin relatif
-        $config = require $_SERVER['DOCUMENT_ROOT'] . '/config/config.php';
+        $config = require $_SERVER['DOCUMENT_ROOT'] . '/config/configDB.php';
         
         try {
             $this->pdo = new PDO(
